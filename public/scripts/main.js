@@ -78,7 +78,8 @@ function initializeUI() {
     pushButton.disabled = true; //Disable since subscription to push can take some time
     if (isSubscribed) {
       // TODO: Unsubscribe user
-      console.log('already subscribed, TODO: unsubscribe user....')
+      console.log('already subscribed, unsubscribe user....')
+      unsubscribeUser();
     } else {
       subscribeUser();
     }
@@ -87,18 +88,24 @@ function initializeUI() {
   //Initialize button to request push notification from server 
   requestPushBtn.addEventListener('click', () => {
     console.log('Request Push message from server...')
-    //Sending
-    fetch('http://localhost:3000/requestPush', {
-      method: 'POST',
-    })
-    .then(function(res) {
-      if(res.ok){
-        console.log('Push request was successful.')
-      }
-      else{
-        console.log('Server rejected push request:', res.body)
-      }
-    })
+    if(isSubscribed){
+      //Sending
+      fetch('http://localhost:3000/requestPush', {
+        method: 'POST',
+      })
+      .then(function(res) {
+        if(res.ok){
+          console.log('Push request was successful.')
+        }
+        else{
+          console.log('Server rejected push request:', res.body)
+        }
+      })
+    }
+    else{
+      console.log('User not subscribed!');
+    }
+    
   })
 
   // Set the initial subscription value
@@ -197,4 +204,25 @@ function updateSubscriptionOnServer(subscription) {
       console.log('Server responded with subscription error.')
     }
   })
+}
+
+// ---------- UNSUBSCRIBE TO NOTIFICATIONS -----------
+function unsubscribeUser() {
+  swRegistration.pushManager.getSubscription()
+  .then(function(subscription) {
+    if (subscription) {
+      return subscription.unsubscribe();
+    }
+  })
+  .catch(function(error) {
+    console.log('Error unsubscribing', error);
+  })
+  .then(function() {
+    //TODO: Update Subscription on server, like updateSubscriptionOnServer(null);
+
+    console.log('User is unsubscribed.');
+    isSubscribed = false;
+
+    updateBtn();
+  });
 }
